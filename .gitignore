@@ -1,0 +1,15 @@
+*.o
+.clang*
+main
+*.ali
+*.a
+*.stderr
+*.stdout
+*.lexch
+*.bexch
+*.cgpr
+b__*
+messages.txt
+*-loc.xml
+
+

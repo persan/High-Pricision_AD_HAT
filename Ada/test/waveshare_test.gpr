@@ -1,0 +1,25 @@
+with "../waveshare.gpr";
+
+project Waveshare_Test is
+
+   for Languages use ("Ada", "C");
+   for Source_Dirs use ("src");
+   for Source_Dirs use project'Source_Dirs & ("../../c/lib/Driver");
+   for Source_Dirs use project'Source_Dirs & ("../../c/examples");
+   for Object_Dir use ".obj";
+   for Exec_Dir use "bin";
+
+   case Waveshare.TARGET is
+      when "arm-linux-gnueabihf" =>
+      when others =>
+         for Source_Dirs use project'Source_Dirs & ("src/host");
+   end case;
+   for Main use ("main.adb");
+
+   package Compiler is
+      for Driver ("c") use "";
+      for Switches ("ada") use ("-gnatX");
+   end Compiler;
+
+end Waveshare_Test;
+
