@@ -12,5 +12,6 @@ begin
    GNAT.Ctrl_C.Install_Handler (On_Ctrl_C'Access);
    GNAT.Exception_Traces.Trace_On (GNAT.Exception_Traces.Every_Raise);
    GNAT.Exception_Traces.Set_Trace_Decorator (GNAT.Traceback.Symbolic.Symbolic_Traceback_No_Hex'Access);
-   TEST_ADC1;
+   -- TEST_ADC1;
+   TEST_ADC1_RATE;
 end;

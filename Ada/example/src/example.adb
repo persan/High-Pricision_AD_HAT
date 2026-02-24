@@ -29,7 +29,6 @@ package body example is
          Value := ADS1263.Get_ADC1 (Channels);
          for I in  Channels'range loop
             Put ("Ch:" & Channels (I)'image & " =>" );
-            Put (Value (I)'image & "  ");
             Put (Item => Value (I));
             New_Line;
          end loop;
@@ -52,7 +51,7 @@ package body example is
       Dummy    : float;
       start    : Ada.Calendar.Time;
       Time     : Duration;
-      Times    : constant := 10000;
+      Times    : constant := 1000;
    begin
       start := Ada.Calendar.Clock;
       for I in 1 .. Times loop
