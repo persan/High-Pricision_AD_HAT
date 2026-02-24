@@ -6,8 +6,7 @@ with Interfaces.C; use Interfaces.C;
 
 package Waveshare.ADS1263 is
 
-
-   type GAIN is 
+   type GAIN is
      (GAIN_1,
       GAIN_2,
       GAIN_4,
@@ -17,7 +16,7 @@ package Waveshare.ADS1263 is
       GAIN_64)
      with Convention => C;  -- ADS1263.h:51
 
-   type DRATE is 
+   type DRATE is
      (DRATE_2d5SPS,
       DRATE_5SPS,
       DRATE_10SPS,
@@ -36,7 +35,7 @@ package Waveshare.ADS1263 is
       DRATE_38400SPS)
      with Convention => C;  -- ADS1263.h:71
 
-   type DELAY_Time is 
+   type DELAY_Time is
      (DELAY_0s,
       DELAY_8d7us,
       DELAY_17us,
@@ -51,14 +50,14 @@ package Waveshare.ADS1263 is
       DELAY_8d8ms)
      with Convention => C;  -- ADS1263.h:87
 
-   type ADC2_DRATE is 
+   type ADC2_DRATE is
      (ADC2_10SPS,
       ADC2_100SPS,
       ADC2_400SPS,
       ADC2_800SPS)
      with Convention => C;  -- ADS1263.h:95
 
-   type ADC2_GAIN is 
+   type ADC2_GAIN is
      (ADC2_GAIN_1,
       ADC2_GAIN_2,
       ADC2_GAIN_4,
@@ -69,7 +68,7 @@ package Waveshare.ADS1263 is
       ADC2_GAIN_128)
      with Convention => C;  -- ADS1263.h:107
 
-   subtype DAC_VOLT is Unsigned_Char range 0 .. 25;
+   subtype DAC_VOLT is unsigned_char range 0 .. 25;
    DAC_VLOT_4_5 : constant := 9;
    DAC_VLOT_3_5 : constant := 8;
    DAC_VLOT_3 : constant := 7;
@@ -90,25 +89,23 @@ package Waveshare.ADS1263 is
    DAC_VLOT_1_5 : constant := 24;
    DAC_VLOT_0_5 : constant := 25;  -- ADS1263.h:130
 
-  
-
-   procedure SetMode (Mode : Unsigned_Char);
+   procedure SetMode (Mode : unsigned_char);
 
    procedure ConfigADC1
      (The_Gain    : GAIN;
       The_drate   : DRATE;
-      The_Delay   : Delay_Time);
+      The_Delay   : DELAY_Time);
 
    procedure ConfigADC2
      (gain      : ADC2_GAIN;
       drate     : ADC2_DRATE;
-      The_Delay : Delay_Time);
+      The_Delay : DELAY_Time);
 
    procedure init_ADC1 (rate : DRATE);
 
    procedure init_ADC2 (rate : ADC2_DRATE);
 
-   subtype Channel_Number is Unsigned_Char range 0 .. 9;
+   subtype Channel_Number is unsigned_char range 0 .. 9;
    subtype Diff_Channel_Number is Channel_Number range 0 .. 4;
    procedure SetChannal (Channal : Channel_Number);
 
@@ -118,31 +115,30 @@ package Waveshare.ADS1263 is
 
    procedure SetDiffChannal_ADC2 (Channal : Diff_Channel_Number);
 
-   function Read_ADC1_Data return Unsigned_Long;
+   function Read_ADC1_Data return unsigned_long;
 
-   function Read_ADC2_Data return Unsigned_Long;
+   function Read_ADC2_Data return unsigned_long;
 
-   function GetChannalValue (Channel : Channel_Number) return Unsigned_Long with
+   function GetChannalValue (Channel : Channel_Number) return unsigned_long with
      Pre => Channel < 5;
 
-   function GetChannalValue_ADC2 (Channel : Channel_Number) return Unsigned_Long;
-   function GetChannalValue_ADC2 (Channel : Channel_Number ; Ref_Voltage : Float := 5.08) return Float;
-   function GetChannalValue_ADC2 (Channel : Channel_Number ; Ref_Voltage : Long_Float := 5.08) return Long_Float;
-   
+   function GetChannalValue_ADC2 (Channel : Channel_Number) return unsigned_long;
+   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float;
+   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float;
+
    type Channel_List is array (Natural range <>) of aliased Channel_Number;
    type Data_Values is array (Natural range <>) of aliased unsigned_long;
-   
-   
+
    function GetAll
-     (List   : Channel_List ) return Data_Values with
+     (List   : Channel_List) return Data_Values with
      Post => List'Length = GetAll'Result'Length;
-   
+
    function GetAll
-     (List   : Channel_List ; Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector with
+     (List   : Channel_List; Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector with
      Post => List'Length = GetAll'Result'Length;
-   
+
    function GetAll
-     (List   : Channel_List ; Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector with
+     (List   : Channel_List; Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector with
      Post => List'Length = GetAll'Result'Length;
 
    procedure GetAll
@@ -150,37 +146,33 @@ package Waveshare.ADS1263 is
       Data        : out Data_Values) with
      pre => List'Length = Data'Length;
 
-   
-   
    subtype All_Data_Values is Data_Values (1 .. 10);
    procedure GetAll_ADC2 (ADC_Values : out All_Data_Values);
-   
-   
+
    function RTD
-     (c_delay     : Delay_Time;
+     (c_delay     : DELAY_Time;
       The_Gain    : GAIN;
-      The_Drate   : DRATE) return Unsigned_Long;
+      The_Drate   : DRATE) return unsigned_long;
 
    procedure DAC
      (volt       : DAC_VOLT;
       isPositive : Boolean;
       isOpen     : Boolean);
-   
-   function Scale (Items       : Data_Values; 
+
+   function Scale (Items       : Data_Values;
                    Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector;
-   
-   function Scale (Items       : Data_Values; 
+
+   function Scale (Items       : Data_Values;
                    Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector;
-   
-   function Scale (Item        : Unsigned_Long;
+
+   function Scale (Item        : unsigned_long;
                    Ref_Voltage : Long_Float := 5.08) return Long_Float;
-   
-   function Scale (Item        : Unsigned_Long; 
+
+   function Scale (Item        : unsigned_long;
                    Ref_Voltage : Float := 5.08) return Float;
 
-
-private 
-   type REG is 
+private
+   type REG is
      (REG_ID,
       REG_POWER,
       REG_INTERFACE,
@@ -228,20 +220,18 @@ private
    CMD_WREG    : constant := 64;
    CMD_WREG2   : constant := 0;  -- ADS1263.h:183
 
-   procedure WriteCmd (Cmd : Unsigned_Char);
+   procedure WriteCmd (Cmd : unsigned_char);
 
-   procedure WriteReg (R : REG; data : Unsigned_Char);
+   procedure WriteReg (R : REG; data : unsigned_char);
 
-   function Read_data (R : REG) return Unsigned_Char;
-   type Unsigned_Char_Array is array (Natural range <>) of aliased Unsigned_Char with Pack => true;
-   
-   function Checksum (val : Unsigned_Char_Array; byt : Unsigned_Char) return Unsigned_Char;
+   function Read_data (R : REG) return unsigned_char;
+   type Unsigned_Char_Array is array (Natural range <>) of aliased unsigned_char with Pack => True;
+
+   function Checksum (val : Unsigned_Char_Array; byt : unsigned_char) return unsigned_char;
    procedure Reset;
-
 
    procedure WaitDRDY;
 
-   function ReadChipID return Unsigned_Char;
-
+   function ReadChipID return unsigned_char;
 
 end Waveshare.ADS1263;

@@ -12,7 +12,7 @@ library project Waveshare is
    for Library_Kind use "Static";
 
    package Compiler is
-      for Switches ("ada") use ("-gnatwa"); -- , "-gnata");
+      for Switches ("ada") use ("-gnatwa", "-gnatyaAbBcdfhIiklnpOrtuxz");
    end Compiler;
 
    package  linker is
