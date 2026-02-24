@@ -53,7 +53,8 @@ package body example is
       Time     : Duration;
       Times    : constant := 1000;
    begin
-      ADS1263.Init_ADC2 (ADS1263.ADC2_100SPS);
+      ADS1263.Set_Mode (Differential => False);
+      ADS1263.init_ADC1 (Rate => ADS1263.DRATE_400SPS);
       start := Ada.Calendar.Clock;
       for I in 1 .. Times loop
          Dummy := ADS1263.Get_ADC1 (0);

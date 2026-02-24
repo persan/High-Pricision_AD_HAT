@@ -2,9 +2,8 @@ SHELL=bash
 IS_TARGET=$(shell if [[ -e /usr/include/bcm2835.h ]]  ; then echo true; else echo false; fi)
 
 all:
-
-	@echo ${IS_TARGET}
 ifeq ("${IS_TARGET}","true")
+	@echo "<TARGET>"
 	gprbuild
 	sudo bin/main
 else
