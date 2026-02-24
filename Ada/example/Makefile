@@ -5,12 +5,13 @@ all:
 
 	@echo ${IS_TARGET}
 ifeq ("${IS_TARGET}","true")
-	git pull
 	gprbuild
 	sudo bin/main
 else
 	@echo "<HOST>"
 	-git commit -a "-mWork"
 	-git push
-	ssh ad-32bit make -C /home/per/High-Pricision_AD_HAT/Ada/test
+	ssh ad-32bit git  -C /home/per/High-Pricision_AD_HAT/ pull
+	ssh ad-32bit make -C /home/per/High-Pricision_AD_HAT/Ada/example
+	
 endif
