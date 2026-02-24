@@ -1,4 +1,6 @@
 with Bcm2835;
+with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.Source_Info;
 package body Waveshare.Config is
 
    -----------------------
@@ -21,7 +23,7 @@ package body Waveshare.Config is
    end;
    function DEV_DRDY_PIN return Unsigned_Char  is
    begin
-      return The_DEV_RST_PIN;
+      return The_DEV_DRDY_PIN;
    end;
 
 
@@ -29,6 +31,8 @@ package body Waveshare.Config is
      (Pin : unsigned_Char; Value : unsigned_Char)
    is
    begin
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Pin =>" & Pin'image & ",Value => " & Value'Image & ");"));
+
       Bcm2835.Gpio_Write (Pin, Value);
    end DEV_Digital_Write;
 
@@ -40,6 +44,7 @@ package body Waveshare.Config is
      (Pin : unsigned_Char) return unsigned_Char
    is
    begin
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Pin =>" & Pin'Image & ");"));
       return Bcm2835.Gpio_Lev (Pin);
    end DEV_Digital_Read;
 
@@ -52,7 +57,10 @@ package body Waveshare.Config is
      (Value : unsigned_Char) return unsigned_Char
    is
    begin
-      return Bcm2835.Spi_Transfer (Value);
+      return Ret : Unsigned_Char := Bcm2835.Spi_Transfer (Value)  do
+         pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Value =>" & Value'Image & ") -> " & Ret'image & ";"));
+         null;
+      end return ;
    end DEV_SPI_WriteByte;
 
    procedure DEV_SPI_WriteByte (Value : unsigned_Char) is
@@ -70,11 +78,6 @@ package body Waveshare.Config is
       return DEV_SPI_WriteByte (16#00#);
    end DEV_SPI_ReadByte;
 
-   procedure DEV_Equipment_Testing is
-   -- I : Int;
-   begin
-      null;
-   end;
    --  static int DEV_Equipment_Testing(void)
    --  {
    --  	int i;
@@ -128,6 +131,7 @@ package body Waveshare.Config is
          end if;
       end;
    begin
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & ";"));
       The_DEV_RST_PIN     := 18;
       The_DEV_CS_PIN      := 22;
       The_DEV_DRDY_PIN    := 17;
@@ -146,8 +150,10 @@ package body Waveshare.Config is
    procedure Initialize (Object : in out Package_Controler) is
       Dummy_Int : Int;
    begin
-      DEV_Equipment_Testing;
-      if Bcm2835.Init /= 0 then
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & ";"));
+
+      -- DEV_Equipment_Testing;
+      if Bcm2835.Init = 0 then
          raise Program_Error with  "bcm2835 init Failed";
       end if;
       DEV_GPIO_Init;

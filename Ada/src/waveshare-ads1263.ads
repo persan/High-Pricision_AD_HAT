@@ -110,7 +110,6 @@ package Waveshare.ADS1263 is
 
    subtype Channel_Number is Unsigned_Char range 0 .. 9;
    subtype Diff_Channel_Number is Channel_Number range 0 .. 4;
-   
    procedure SetChannal (Channal : Channel_Number);
 
    procedure SetChannal_ADC2 (Channal : Channel_Number);
@@ -175,6 +174,7 @@ package Waveshare.ADS1263 is
    
    function Scale (Item        : Unsigned_Long;
                    Ref_Voltage : Long_Float := 5.08) return Long_Float;
+   
    function Scale (Item        : Unsigned_Long; 
                    Ref_Voltage : Float := 5.08) return Float;
 
@@ -210,31 +210,32 @@ private
       REG_ADC2FSC1)
      with Convention => C;  -- ADS1263.h:162
 
-   CMD_RESET : constant := 6;
-   CMD_START1 : constant := 8;
-   CMD_STOP1 : constant := 10;
-   CMD_START2 : constant := 12;
-   CMD_STOP2 : constant := 14;
-   CMD_RDATA1 : constant := 18;
-   CMD_RDATA2 : constant := 20;
+   CMD_RESET   : constant := 6;
+   CMD_START1  : constant := 8;
+   CMD_STOP1   : constant := 10;
+   CMD_START2  : constant := 12;
+   CMD_STOP2   : constant := 14;
+   CMD_RDATA1  : constant := 18;
+   CMD_RDATA2  : constant := 20;
    CMD_SYOCAL1 : constant := 22;
    CMD_SYGCAL1 : constant := 23;
    CMD_SFOCAL1 : constant := 25;
    CMD_SYOCAL2 : constant := 27;
    CMD_SYGCAL2 : constant := 28;
    CMD_SFOCAL2 : constant := 30;
-   CMD_RREG : constant := 32;
-   CMD_RREG2 : constant := 0;
-   CMD_WREG : constant := 64;
-   CMD_WREG2 : constant := 0;  -- ADS1263.h:183
+   CMD_RREG    : constant := 32;
+   CMD_RREG2   : constant := 0;
+   CMD_WREG    : constant := 64;
+   CMD_WREG2   : constant := 0;  -- ADS1263.h:183
 
    procedure WriteCmd (Cmd : Unsigned_Char);
 
    procedure WriteReg (R : REG; data : Unsigned_Char);
 
    function Read_data (R : REG) return Unsigned_Char;
-
-   function Checksum (val : unsigned_long; byt : Unsigned_Char) return Unsigned_Char;
+   type Unsigned_Char_Array is array (Natural range <>) of aliased Unsigned_Char with Pack => true;
+   
+   function Checksum (val : Unsigned_Char_Array; byt : Unsigned_Char) return Unsigned_Char;
    procedure Reset;
 
 

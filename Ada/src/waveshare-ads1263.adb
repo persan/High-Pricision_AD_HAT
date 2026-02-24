@@ -1,5 +1,6 @@
 pragma Warnings (Off);
-with Ada.Text_IO.Unbounded_IO;
+with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.Source_Info;
 with System.Dim.Generic_Mks;
 with Waveshare.Config;
 package body Waveshare.ADS1263 is
@@ -20,6 +21,8 @@ package body Waveshare.ADS1263 is
 
    procedure Reset is
    begin
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity));
+
       DEV_Digital_Write (DEV_RST_PIN, 1);
       delay 0.300;
       DEV_Digital_Write (DEV_RST_PIN, 0);
@@ -34,6 +37,7 @@ package body Waveshare.ADS1263 is
 
    procedure WriteCmd (Cmd : Unsigned_Char) is
    begin
+      -- pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Cmd =>" & Cmd'image & ");"));
       DEV_Digital_Write (DEV_CS_PIN, 0);
       DEV_SPI_WriteByte (Cmd);
       DEV_Digital_Write (DEV_CS_PIN, 1);
@@ -45,6 +49,7 @@ package body Waveshare.ADS1263 is
 
    procedure WriteReg (R : Reg; data : Unsigned_Char) is
    begin
+      --  pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Reg =>" & R'image & ",data =>" & Data'Image & " );"));
       DEV_Digital_Write (DEV_CS_PIN, 0);
       DEV_SPI_WriteByte (CMD_WREG or Reg'pos (R));
       DEV_SPI_WriteByte (16#00#);
@@ -62,6 +67,7 @@ package body Waveshare.ADS1263 is
       DEV_Digital_Write (DEV_CS_PIN, 0);
       DEV_SPI_WriteByte (CMD_RREG or Reg'Pos (R));
       DEV_SPI_WriteByte (16#00#);
+      delay 0.001;
       temp := DEV_SPI_ReadByte;
       DEV_Digital_Write (DEV_CS_PIN, 1);
       return temp;
@@ -72,21 +78,20 @@ package body Waveshare.ADS1263 is
    --------------
 
    function Checksum
-     (val : unsigned_long; byt : Unsigned_Char) return Unsigned_Char
+     (val : Unsigned_Char_Array; byt : Unsigned_Char) return Unsigned_Char
    is
       Sum  : Unsigned_Char := 0;
       Mask : constant := 16#FF#;
-      V    : Unsigned_Long := Val;
    begin
-      while V > 0 loop
-         Sum := Unsigned_Char (V mod Mask);
-         V := V / Mask;
+      for I of Val loop
+         Sum := (Sum + I);
       end loop;
       Sum := Sum + 16#9B#;
       return Sum xor Byt;
    end Checksum;
+
    procedure  Checksum
-     (val : unsigned_long; byt : Unsigned_Char) is
+     (val : Unsigned_Char_Array; byt : Unsigned_Char) is
    begin
       if Checksum (Val, Byt) /= 0 then
          raise Constraint_Error with "Checksum fail";
@@ -102,7 +107,8 @@ package body Waveshare.ADS1263 is
    begin
       while DEV_Digital_Read (DEV_DRDY_PIN) /= 0 loop
          I := I + 1;
-         if I > 4000000 then
+         delay 0.001;
+         if I > 1000 then
             raise Program_Error with "Time out";
          end if;
       end loop;
@@ -114,7 +120,11 @@ package body Waveshare.ADS1263 is
 
    function ReadChipID return Unsigned_Char is
    begin
-      return Read_Data (REG_ID) / (2 ** 5);
+
+      return Ret : Unsigned_Char :=  Read_Data (REG_ID) do
+         Ret := Ret  / (2 ** 5);
+      end return;
+
    end ReadChipID;
 
    -------------
@@ -123,6 +133,7 @@ package body Waveshare.ADS1263 is
 
    procedure SetMode (Mode : Unsigned_Char) is
    begin
+      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity));
       ScanMode := (if Mode = 0 then 0 else 1);
    end SetMode;
 
@@ -130,11 +141,14 @@ package body Waveshare.ADS1263 is
    -- ConfigADC1 --
    ----------------
    procedure Set (Registry : REG; Value : Unsigned_Char) is
+      Val : Unsigned_Char;
    begin
       WriteReg (Registry, Value);
-      delay 0.0001;
-      if Read_Data (Registry) /= Value then
-         raise Program_Error with "Set " & Registry'Image & " Failed.";
+      delay 0.001;
+
+      Val := Read_Data (Registry);
+      if  Val /= Value then
+         raise Program_Error with "Set " & Registry'Image & " Failed, (got:" & Val'Image & " expected :" & Value'Image & ").";
       end if;
    end;
 
@@ -143,10 +157,14 @@ package body Waveshare.ADS1263 is
      (The_Gain : GAIN; The_drate : DRATE; The_Delay : Delay_Time)
    is
    begin
-      Set (REG_MODE2, 16#80# or (GAIN'Pos (The_Gain) * 2 ** 4) or DRATE'Pos (The_Drate));
+      Set (REG_MODE2,  16#80# or (GAIN'Pos (The_Gain) * 2 ** 4) or DRATE'Pos (The_Drate));
+      delay 0.001;
       Set (REG_REFMUX, 16#24#);
-      Set (REG_MODE0, Delay_Time'Pos (The_Delay));
-      Set (REG_MODE1, 16#84#); --  Digital Filter; 0x84:FIR, 0x64:Sinc4, 0x44:Sinc3, 0x24:Sinc2, 0x04:Sinc1
+      delay 0.001;
+      Set (REG_MODE0,  Delay_Time'Pos (The_Delay));
+      delay 0.001;
+      Set (REG_MODE1,  16#84#); --  Digital Filter; 0x84:FIR, 0x64:Sinc4, 0x44:Sinc3, 0x24:Sinc2, 0x04:Sinc1
+      delay 0.001;
    end ConfigADC1;
 
    ----------------
@@ -166,11 +184,11 @@ package body Waveshare.ADS1263 is
    ---------------
 
    procedure init_ADC1 (rate : DRATE)  is
+      Dummy : Unsigned_Char;
    begin
+      --  pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(rate =>" & Rate'image & ");"));
       Reset;
-      if ReadChipID /= 1 then
-         raise Program_Error with "ID Read Failed";
-      end if;
+      Dummy := ReadChipID;
       WriteCmd (CMD_STOP1);
       ConfigADC1 (GAIN_1, rate, DELAY_35us);
       WriteCmd (CMD_START1);
@@ -241,7 +259,7 @@ package body Waveshare.ADS1263 is
    --------------------
 
    function Read_ADC1_Data return Unsigned_Long is
-      Buf         : array (1 .. 4) of Unsigned_Char;
+      Buf         : Unsigned_Char_Array (1 .. 4);
       Read        : Unsigned_Long with Import => True, Address => Buf'Address;
       Status, CRC : Unsigned_Char;
 
@@ -255,10 +273,11 @@ package body Waveshare.ADS1263 is
          end if;
       end loop;
 
-      Buf (1) := DEV_SPI_ReadByte;
-      Buf (2) := DEV_SPI_ReadByte;
-      Buf (3) := DEV_SPI_ReadByte;
       Buf (4) := DEV_SPI_ReadByte;
+      Buf (3) := DEV_SPI_ReadByte;
+      Buf (2) := DEV_SPI_ReadByte;
+      Buf (1) := DEV_SPI_ReadByte;
+      DEV_Digital_Write (DEV_CS_PIN, 1);
       return read;
    end Read_ADC1_Data;
 
@@ -267,8 +286,15 @@ package body Waveshare.ADS1263 is
    --------------------
 
    function Read_ADC2_Data return Unsigned_Long is
-      Buf         : array (1 .. 4) of Unsigned_Char;
-      Read        : Unsigned_Long with Import => True, Address => Buf'Address;
+
+      type Ret_type  (Part : Boolean := False ) is record
+         case Part is
+            when True =>   Buf         : Unsigned_Char_Array (1 .. 4);
+            when False =>  Read        : Unsigned_Long;
+         end case;
+      end record;
+      Ret : Ret_Type;
+
       Status, CRC : Unsigned_Char;
    begin
       DEV_Digital_Write (DEV_CS_PIN, 0);
@@ -276,14 +302,14 @@ package body Waveshare.ADS1263 is
          DEV_SPI_WriteByte (CMD_RDATA2);
          exit when (DEV_SPI_ReadByte and 16#80#) /= 0;
       end loop;
-      Buf (1) := DEV_SPI_ReadByte;
-      Buf (2) := DEV_SPI_ReadByte;
-      Buf (3) := DEV_SPI_ReadByte;
-      Buf (4) := DEV_SPI_ReadByte;
+      Ret.Buf (4) := DEV_SPI_ReadByte;
+      Ret.Buf (3) := DEV_SPI_ReadByte;
+      Ret.Buf (2) := DEV_SPI_ReadByte;
+      Ret.Buf (1) := DEV_SPI_ReadByte;
       CRC := DEV_SPI_ReadByte;
       DEV_Digital_Write (DEV_CS_PIN, 1);
-      ADS1263.Checksum (Read, Crc);
-      return Read;
+      ADS1263.Checksum (Ret.Buf, Crc);
+      return Ret.Read;
    end Read_ADC2_Data;
 
    ---------------------
@@ -384,7 +410,9 @@ package body Waveshare.ADS1263 is
    ---------
 
    function RTD
-     (c_delay : Delay_Time; The_Gain : GAIN; The_Drate : DRATE)
+     (c_delay   : Delay_Time;
+      The_Gain  : GAIN;
+      The_Drate : DRATE)
       return Unsigned_Long
    is
       MODE0   : Unsigned_Char := Delay_Time'Pos (C_Delay);

@@ -11,5 +11,7 @@ main
 b__*
 messages.txt
 *-loc.xml
-
-
+1
+2
+*.cswi
+.#*

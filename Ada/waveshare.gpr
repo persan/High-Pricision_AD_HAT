@@ -12,13 +12,13 @@ library project Waveshare is
    for Library_Kind use "Static";
 
    package Compiler is
-      for Switches ("ada") use ("-gnatwa");
+      for Switches ("ada") use ("-gnatwa"); -- , "-gnata");
    end Compiler;
 
    package  linker is
       case TARGET is
-      when "arm-linux-gnueabihf" =>
-         for Linker_Options use ("-L" & "bcm2835");
+      when "arm-linux-gnueabihf" | "armhf-linux" =>
+         for Linker_Options use ("-l" & "bcm2835");
       when others =>
          null;
       end case;
