@@ -98,7 +98,7 @@ package body Waveshare.ADS1263 is
       while DEV_Digital_Read (DEV_DRDY_PIN) /= 0 loop
          I := I + 1;
          delay 0.001;
-         if I > 1000 then
+         if I > 10000 then
             raise Program_Error with "Time out";
          end if;
       end loop;
