@@ -18,10 +18,11 @@ project Waveshare_Test is
          for Source_Dirs use project'Source_Dirs & ("../../c/lib/Config");
          for Source_Dirs use project'Source_Dirs & ("../../c/examples");
    end case;
-   for Main use ("main.adb");
+   for Main use ("example-main.adb");
 
    package Builder is
       for Switches (others) use ("-j0", "-g", "-s");
+      for Executable ("example-main.adb") use "main";
    end Builder;
 
    package Compiler is
