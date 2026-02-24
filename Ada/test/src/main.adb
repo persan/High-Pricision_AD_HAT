@@ -30,17 +30,17 @@ procedure Main is
       Channels : constant ADS1263.Channel_List := (0, 1, 2, 3, 4);
       Value    : ADS1263.Data_Values (Channels'Range);
    begin
-      -- while Continue loop
-      Put_Line ("--------------------------------------");
-      Value := ADS1263.GetAll (Channels);
-      for I in  Channels'range loop
-         Put ("Ch:" & Channels (I)'image & " =>" );
-         Put (Value (I)'image & "  ");
-         Put (Item => ADS1263.Scale (Value (I)));
-         New_Line;
+      while Continue loop
+         Put_Line ("--------------------------------------");
+         Value := ADS1263.Get_ADC1 (Channels);
+         for I in  Channels'range loop
+            Put ("Ch:" & Channels (I)'image & " =>" );
+            Put (Value (I)'image & "  ");
+            Put (Item => ADS1263.Scale (Value (I)));
+            New_Line;
+         end loop;
+         delay 1.0;
       end loop;
-      delay 1.0;
-      -- end loop;
    end;
 
    procedure TEST_ADC2 is

@@ -13,10 +13,10 @@ package Waveshare.ADS1263 is
       GAIN_8,
       GAIN_16,
       GAIN_32,
-      GAIN_64)
-     with Convention => C;  -- ADS1263.h:51
+      GAIN_64,
+      GAIN_128);
 
-   type DRATE is
+   type ADC1_DRATE is
      (DRATE_2d5SPS,
       DRATE_5SPS,
       DRATE_10SPS,
@@ -32,8 +32,7 @@ package Waveshare.ADS1263 is
       DRATE_7200SPS,
       DRATE_14400SPS,
       DRATE_19200SPS,
-      DRATE_38400SPS)
-     with Convention => C;  -- ADS1263.h:71
+      DRATE_38400SPS);
 
    type DELAY_Time is
      (DELAY_0s,
@@ -47,8 +46,7 @@ package Waveshare.ADS1263 is
       DELAY_1d1ms,
       DELAY_2d2ms,
       DELAY_4d4ms,
-      DELAY_8d8ms)
-     with Convention => C;  -- ADS1263.h:87
+      DELAY_8d8ms);
 
    type ADC2_DRATE is
      (ADC2_10SPS,
@@ -57,91 +55,84 @@ package Waveshare.ADS1263 is
       ADC2_800SPS)
      with Convention => C;  -- ADS1263.h:95
 
-   type ADC2_GAIN is
-     (ADC2_GAIN_1,
-      ADC2_GAIN_2,
-      ADC2_GAIN_4,
-      ADC2_GAIN_8,
-      ADC2_GAIN_16,
-      ADC2_GAIN_32,
-      ADC2_GAIN_64,
-      ADC2_GAIN_128)
-     with Convention => C;  -- ADS1263.h:107
+   subtype ADC1_GAIN is GAIN range GAIN_1 .. GAIN_64;
 
    subtype DAC_VOLT is unsigned_char range 0 .. 25;
-   DAC_VLOT_4_5 : constant := 9;
-   DAC_VLOT_3_5 : constant := 8;
-   DAC_VLOT_3 : constant := 7;
-   DAC_VLOT_2_75 : constant := 6;
-   DAC_VLOT_2_625 : constant := 5;
-   DAC_VLOT_2_5625 : constant := 4;
-   DAC_VLOT_2_53125 : constant := 3;
-   DAC_VLOT_2_515625 : constant := 2;
+   DAC_VLOT_4_5       : constant := 9;
+   DAC_VLOT_3_5       : constant := 8;
+   DAC_VLOT_3         : constant := 7;
+   DAC_VLOT_2_75      : constant := 6;
+   DAC_VLOT_2_625     : constant := 5;
+   DAC_VLOT_2_5625    : constant := 4;
+   DAC_VLOT_2_53125   : constant := 3;
+   DAC_VLOT_2_515625  : constant := 2;
    DAC_VLOT_2_5078125 : constant := 1;
-   DAC_VLOT_2_5 : constant := 0;
+   DAC_VLOT_2_5       : constant := 0;
    DAC_VLOT_2_4921875 : constant := 17;
-   DAC_VLOT_2_484375 : constant := 18;
-   DAC_VLOT_2_46875 : constant := 19;
-   DAC_VLOT_2_4375 : constant := 20;
-   DAC_VLOT_2_375 : constant := 21;
-   DAC_VLOT_2_25 : constant := 22;
-   DAC_VLOT_2 : constant := 23;
-   DAC_VLOT_1_5 : constant := 24;
-   DAC_VLOT_0_5 : constant := 25;  -- ADS1263.h:130
+   DAC_VLOT_2_484375  : constant := 18;
+   DAC_VLOT_2_46875   : constant := 19;
+   DAC_VLOT_2_4375    : constant := 20;
+   DAC_VLOT_2_375     : constant := 21;
+   DAC_VLOT_2_25      : constant := 22;
+   DAC_VLOT_2         : constant := 23;
+   DAC_VLOT_1_5       : constant := 24;
+   DAC_VLOT_0_5       : constant := 25;  -- ADS1263.h:130
 
    procedure SetMode (Mode : unsigned_char);
 
    procedure ConfigADC1
-     (The_Gain    : GAIN;
-      The_drate   : DRATE;
+     (The_Gain    : ADC1_GAIN;
+      The_drate   : ADC1_DRATE;
       The_Delay   : DELAY_Time);
 
    procedure ConfigADC2
-     (gain      : ADC2_GAIN;
+     (GAIN      : ADS1263.GAIN;
       drate     : ADC2_DRATE;
       The_Delay : DELAY_Time);
 
-   procedure init_ADC1 (rate : DRATE);
+   procedure init_ADC1 (rate : ADC1_DRATE);
 
    procedure init_ADC2 (rate : ADC2_DRATE);
 
    subtype Channel_Number is unsigned_char range 0 .. 9;
-   subtype Diff_Channel_Number is Channel_Number range 0 .. 4;
+
    procedure SetChannal (Channal : Channel_Number);
 
-   procedure SetChannal_ADC2 (Channal : Channel_Number);
-
+   subtype Diff_Channel_Number is Channel_Number range 0 .. 4;
    procedure SetDiffChannal (Channal : Diff_Channel_Number);
 
    procedure SetDiffChannal_ADC2 (Channal : Diff_Channel_Number);
 
    function Read_ADC1_Data return unsigned_long;
 
+   procedure SetChannal_ADC2 (Channal : Channel_Number);
    function Read_ADC2_Data return unsigned_long;
 
    function GetChannalValue (Channel : Channel_Number) return unsigned_long with
      Pre => Channel < 5;
 
-   function GetChannalValue_ADC2 (Channel : Channel_Number) return unsigned_long;
-   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float;
-   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float;
+   function Get_ADC2 (Channel : Channel_Number) return unsigned_long;
+   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float;
+   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float;
 
    type Channel_List is array (Natural range <>) of aliased Channel_Number;
    type Data_Values is array (Natural range <>) of aliased unsigned_long;
 
-   function GetAll
+   function Get_ADC1
      (List   : Channel_List) return Data_Values with
-     Post => List'Length = GetAll'Result'Length;
+     Post => List'Length = Get_ADC1'Result'Length;
 
-   function GetAll
-     (List   : Channel_List; Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector with
-     Post => List'Length = GetAll'Result'Length;
+   function Get_ADC1
+     (List        : Channel_List;
+      Ref_Voltage : Float := 5.08)
+      return Ada.Numerics.Real_Arrays.Real_Vector with
+     Post => List'Length = Get_ADC1'Result'Length;
 
-   function GetAll
+   function Get_ADC1
      (List   : Channel_List; Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector with
-     Post => List'Length = GetAll'Result'Length;
+     Post => List'Length = Get_ADC1'Result'Length;
 
-   procedure GetAll
+   procedure Get_ADC1
      (List        : Channel_List;
       Data        : out Data_Values) with
      pre => List'Length = Data'Length;
@@ -152,7 +143,7 @@ package Waveshare.ADS1263 is
    function RTD
      (c_delay     : DELAY_Time;
       The_Gain    : GAIN;
-      The_Drate   : DRATE) return unsigned_long;
+      The_Drate   : ADC1_DRATE) return unsigned_long;
 
    procedure DAC
      (volt       : DAC_VOLT;
@@ -199,26 +190,25 @@ private
       REG_ADC2OFC0,
       REG_ADC2OFC1,
       REG_ADC2FSC0,
-      REG_ADC2FSC1)
-     with Convention => C;  -- ADS1263.h:162
+      REG_ADC2FSC1);
 
-   CMD_RESET   : constant := 6;
-   CMD_START1  : constant := 8;
-   CMD_STOP1   : constant := 10;
-   CMD_START2  : constant := 12;
-   CMD_STOP2   : constant := 14;
-   CMD_RDATA1  : constant := 18;
-   CMD_RDATA2  : constant := 20;
-   CMD_SYOCAL1 : constant := 22;
-   CMD_SYGCAL1 : constant := 23;
-   CMD_SFOCAL1 : constant := 25;
-   CMD_SYOCAL2 : constant := 27;
-   CMD_SYGCAL2 : constant := 28;
-   CMD_SFOCAL2 : constant := 30;
-   CMD_RREG    : constant := 32;
-   CMD_RREG2   : constant := 0;
-   CMD_WREG    : constant := 64;
-   CMD_WREG2   : constant := 0;  -- ADS1263.h:183
+   CMD_RESET   : constant := 2#0000_0110#; --  Reset the ADC,                  0000 011x (06h or 07h)
+   CMD_START1  : constant := 2#0000_1000#; --  Start ADC1 conversions,         0000 100x (08h or 09h)
+   CMD_STOP1   : constant := 2#0000_1010#; --  Stop ADC1 conversions,          0000 101x (0Ah or 0Bh)
+   CMD_START2  : constant := 2#0000_1100#; --  Start ADC2 conversions,         0000 110x (0Ch or 0Dh)
+   CMD_STOP2   : constant := 2#0000_1110#; --  Stop ADC2 conversions,          0000 111x (0Eh or 0Fh)
+   CMD_RDATA1  : constant := 2#0001_0010#; --  Read ADC1 data,                 0001 001x (12h or 13h)
+   CMD_RDATA2  : constant := 2#0001_0100#; --  Read ADC2 data,                 0001 010x (14h or 15h)
+   CMD_SYOCAL1 : constant := 2#0001_0110#; --  DC1 system offset calibration,  0001 0110 (16h)
+   CMD_SYGCAL1 : constant := 2#0001_0111#; --  ADC1 system gain calibration,   0001 0111 (17h)
+   CMD_SFOCAL1 : constant := 2#0001_1001#; --  ADC1 self offset calibration,   0001 1001 (19h)
+   CMD_SYOCAL2 : constant := 2#0001_1011#; --  ADC2 system offset calibration, 0001 1011 (1Bh)
+   CMD_SYGCAL2 : constant := 2#0001_1100#; --  ADC2 system gain calibration,   0001 1100 (1Ch)
+   CMD_SFOCAL2 : constant := 2#0001_1110#; --  ADC2 self offset calibration,   0001 1110 (1Eh)
+   CMD_RREG    : constant := 2#0010_0000#; --  Read registers                  001r rrrr (20h+000r rrrr)
+   CMD_RREG2   : constant := 2#0000_0000#; --  number of registers to read minus 1, 000n nnnn
+   CMD_WREG    : constant := 2#0100_0000#; --  Write registers                 010r rrrr (40h+000r rrrr)
+   CMD_WREG2   : constant := 2#0000_0000#; --  number of registers to write minus 1, 000n nnnn
 
    procedure WriteCmd (Cmd : unsigned_char);
 

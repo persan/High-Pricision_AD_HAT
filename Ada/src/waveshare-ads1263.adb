@@ -5,12 +5,6 @@ package body Waveshare.ADS1263 is
    ScanMode    : aliased unsigned_char;
    use Waveshare.Config;
 
-   --  ADS1263.h:35
-   --  ADS1263.h:36
-
-   --  ADS1263.h:38
-   --  ADS1263.h:39
-
    -----------
    -- Reset --
    -----------
@@ -33,10 +27,10 @@ package body Waveshare.ADS1263 is
 
    procedure WriteCmd (Cmd : unsigned_char) is
    begin
-      --  pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Cmd =>" & Cmd'image & ");"));
       DEV_Digital_Write (DEV_CS_PIN, 0);
       DEV_SPI_WriteByte (Cmd);
       DEV_Digital_Write (DEV_CS_PIN, 1);
+      delay 0.001;
    end WriteCmd;
 
    --------------
@@ -45,12 +39,12 @@ package body Waveshare.ADS1263 is
 
    procedure WriteReg (R : REG; data : unsigned_char) is
    begin
-      --  pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(Reg =>" & R'image & ",data =>" & Data'Image & " );"));
       DEV_Digital_Write (DEV_CS_PIN, 0);
       DEV_SPI_WriteByte (CMD_WREG or REG'Pos (R));
       DEV_SPI_WriteByte (16#00#);
       DEV_SPI_WriteByte (data);
       DEV_Digital_Write (DEV_CS_PIN, 1);
+      delay 0.001;
    end WriteReg;
 
    ---------------
@@ -66,6 +60,7 @@ package body Waveshare.ADS1263 is
       delay 0.001;
       Temp := DEV_SPI_ReadByte;
       DEV_Digital_Write (DEV_CS_PIN, 1);
+      delay 0.001;
       return Temp;
    end Read_data;
 
@@ -142,23 +137,22 @@ package body Waveshare.ADS1263 is
       delay 0.001;
 
       Val := Read_data (Registry);
+      delay 0.001;
       if  Val /= Value then
          raise Program_Error with "Set " & Registry'Image & " Failed, (got:" & Val'Image & " expected :" & Value'Image & ").";
       end if;
    end;
 
    procedure ConfigADC1
-     (The_Gain : GAIN; The_drate : DRATE; The_Delay : DELAY_Time)
+     (The_Gain    : ADC1_GAIN;
+      The_drate   : ADC1_DRATE;
+      The_Delay   : DELAY_Time)
    is
    begin
-      Set (REG_MODE2,  16#80# or (GAIN'Pos (The_Gain) * 2 ** 4) or DRATE'Pos (The_drate));
-      delay 0.001;
+      Set (REG_MODE2,  16#80# or (GAIN'Pos (The_Gain) * 2 ** 4) or ADC1_DRATE'Pos (The_drate));
       Set (REG_REFMUX, 16#24#);
-      delay 0.001;
       Set (REG_MODE0,  DELAY_Time'Pos (The_Delay));
-      delay 0.001;
       Set (REG_MODE1,  16#84#); --  Digital Filter; 0x84:FIR, 0x64:Sinc4, 0x44:Sinc3, 0x24:Sinc2, 0x04:Sinc1
-      delay 0.001;
    end ConfigADC1;
 
    ----------------
@@ -166,10 +160,12 @@ package body Waveshare.ADS1263 is
    ----------------
 
    procedure ConfigADC2
-     (gain : ADC2_GAIN; drate : ADC2_DRATE; The_Delay : DELAY_Time)
+     (GAIN      : ADS1263.GAIN;
+      drate     : ADC2_DRATE;
+      The_Delay : DELAY_Time)
    is
    begin
-      WriteReg (REG_ADC2CFG, 16#20# or ADC2_DRATE'Pos (drate) * 2 ** 16 or ADC2_GAIN'Pos (gain));
+      WriteReg (REG_ADC2CFG, 16#20# or ADC2_DRATE'Pos (drate) * 2 ** 16 or ADS1263.GAIN'Pos (GAIN));
       Set (REG_MODE0, DELAY_Time'Pos (The_Delay));
    end ConfigADC2;
 
@@ -177,10 +173,9 @@ package body Waveshare.ADS1263 is
    -- init_ADC1 --
    ---------------
 
-   procedure init_ADC1 (rate : DRATE)  is
+   procedure init_ADC1 (rate : ADC1_DRATE)  is
       Dummy : unsigned_char;
    begin
-      --  pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity & "(rate =>" & Rate'image & ");"));
       Reset;
       Dummy := ReadChipID;
       WriteCmd (CMD_STOP1);
@@ -199,7 +194,7 @@ package body Waveshare.ADS1263 is
          raise Program_Error with "ID Read Failed";
       end if;
       WriteCmd (CMD_STOP2);
-      ConfigADC2 (ADC2_GAIN_1, rate, DELAY_35us);
+      ConfigADC2 (GAIN_1, rate, DELAY_35us);
    end init_ADC2;
 
    ----------------
@@ -325,55 +320,54 @@ package body Waveshare.ADS1263 is
    -- GetChannalValue_ADC2 --
    --------------------------
 
-   function GetChannalValue_ADC2 (Channel : Channel_Number) return unsigned_long
+   function Get_ADC2 (Channel : Channel_Number) return unsigned_long
    is
    begin
       if ScanMode = 0 then -- 0  Single-ended input  10 channel1 Differential input  5 channel
          SetChannal_ADC2 (Channel);
-         WriteCmd (CMD_START2);
       else
          SetDiffChannal_ADC2 (Channel);
-         WriteCmd (CMD_START2);
       end if;
+      WriteCmd (CMD_START2);
       return Read_ADC2_Data;
-   end GetChannalValue_ADC2;
+   end Get_ADC2;
 
-   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float is
+   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float is
    begin
-      return Scale (GetChannalValue_ADC2 (Channel), Ref_Voltage);
-   end GetChannalValue_ADC2;
+      return Scale (Get_ADC2 (Channel), Ref_Voltage);
+   end Get_ADC2;
 
-   function GetChannalValue_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float is
+   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float is
    begin
-      return Scale (GetChannalValue_ADC2 (Channel), Ref_Voltage);
-   end GetChannalValue_ADC2;
+      return Scale (Get_ADC2 (Channel), Ref_Voltage);
+   end Get_ADC2;
 
    ------------
    -- GetAll --
    ------------
 
-   function GetAll
+   function Get_ADC1
      (List   : Channel_List) return Data_Values is
    begin
       return Ret : Data_Values (List'Range) do
-         GetAll (List, Ret);
+         Get_ADC1 (List, Ret);
       end return;
    end;
 
-   function GetAll
+   function Get_ADC1
      (List   : Channel_List; Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector is
    begin
-      return Scale (GetAll (List), Ref_Voltage);
+      return Scale (Get_ADC1 (List), Ref_Voltage);
    end;
 
-   function GetAll
+   function Get_ADC1
      (List        : Channel_List;
       Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector is
    begin
-      return Scale (GetAll (List), Ref_Voltage);
+      return Scale (Get_ADC1 (List), Ref_Voltage);
    end;
 
-   procedure GetAll
+   procedure Get_ADC1
      (List        : Channel_List;
       Data        : out Data_Values) is
    begin
@@ -389,7 +383,7 @@ package body Waveshare.ADS1263 is
    procedure GetAll_ADC2 (ADC_Values : out All_Data_Values) is
    begin
       for I in ADC_Values'Range loop
-         ADC_Values (I) := ADS1263.GetChannalValue_ADC2 (Channel_Number (I));
+         ADC_Values (I) := ADS1263.Get_ADC2 (Channel_Number (I));
          ADS1263.WriteCmd (CMD_STOP2);
       end loop;
    end GetAll_ADC2;
@@ -401,13 +395,13 @@ package body Waveshare.ADS1263 is
    function RTD
      (c_delay   : DELAY_Time;
       The_Gain  : GAIN;
-      The_Drate : DRATE)
+      The_Drate : ADC1_DRATE)
       return unsigned_long
    is
       MODE0   : constant unsigned_char := DELAY_Time'Pos (c_delay);
       IDACMUX : constant unsigned_char := 2#1010_0011#;
       IDACMAG : constant unsigned_char := 2#0011_0011#;
-      MODE2   : constant unsigned_char := GAIN'Pos (The_Gain) * 2 ** 4  or DRATE'Pos (The_Drate);
+      MODE2   : constant unsigned_char := GAIN'Pos (The_Gain) * 2 ** 4  or ADC1_DRATE'Pos (The_Drate);
       INPMUX  : constant unsigned_char := 2#0111_0110#;
       REFMUX  : constant unsigned_char := 2#0001_1011#;
       Value   : unsigned_long;
