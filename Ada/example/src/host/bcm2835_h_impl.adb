@@ -3,7 +3,7 @@ with GNAt.Source_Info;
 with GNAT.Time_Stamp;
 package body bcm2835_h_Impl is
    use Interfaces.C.Strings;
-
+   pragma Warnings (Off);
    ------------------
    -- bcm2835_init --
    ------------------

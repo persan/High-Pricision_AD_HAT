@@ -1,20 +1,13 @@
 with Ada.Calendar;
 with Ada.Text_IO;
-with Ada.Long_Float_Text_IO;
-with GNAT.Altivec;
-with GNAT.Ctrl_C;
+with Ada.Float_Text_IO;
 with Interfaces.C;
 with Waveshare.ADS1263;
-with GNAT.Exception_Traces;
-with GNAT.Traceback.Symbolic;
-
-with bcm2835_h_Impl; -- to get the mockup
-
+with Ada.Numerics.Real_Arrays;
 package body example is
    use Waveshare;
-   use Ada.Long_Float_Text_IO;
+   use Ada.Float_Text_IO;
    use Ada.Text_IO;
-   use type Interfaces.C.unsigned_long;
    use all type Ada.Calendar.Time;
    Continue : Boolean := True with Warnings => Off;
 
@@ -26,18 +19,18 @@ package body example is
    end;
 
    procedure TEST_ADC1 is
-      Channels : constant ADS1263.Channel_List := (0, 1, 2, 3, 4);
-      Value    : ADS1263.Data_Values (Channels'Range);
+      Channels : constant ADS1263.Channel_List := [0, 1, 2, 3, 4];
+      Value    : Ada.Numerics.Real_Arrays.Real_Vector (Channels'Range);
    begin
-      ADS1263.SetMode (0);
-      ADS1263.init_ADC1 (ADS1263.DRATE_400SPS);
+      ADS1263.Set_Mode (Differential => False);
+      ADS1263.init_ADC1 (Rate => ADS1263.DRATE_400SPS);
       while Continue loop
          Put_Line ("--------------------------------------");
          Value := ADS1263.Get_ADC1 (Channels);
          for I in  Channels'range loop
             Put ("Ch:" & Channels (I)'image & " =>" );
             Put (Value (I)'image & "  ");
-            Put (Item => ADS1263.Scale (Value (I)));
+            Put (Item => Value (I));
             New_Line;
          end loop;
          delay 1.0;
@@ -45,24 +38,25 @@ package body example is
    end;
 
    procedure TEST_ADC2 is
-      Value    : ADS1263.All_Data_Values;
+      Channels : constant ADS1263.Channel_List := [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      Value    : Ada.Numerics.Real_Arrays.Real_Vector (Channels'Range);
    begin
       ADS1263.Init_ADC2 (ADS1263.ADC2_100SPS);
       while Continue loop
-         ADS1263.GetAll_ADC2 (Value);
+         Value := ADS1263.Get_ADC2 (Channels);
          Put_Line (Value'image);
       end loop;
    end;
 
    procedure TEST_ADC1_RATE is
-      Dummy    : Interfaces.C.Unsigned_Long;
+      Dummy    : float;
       start    : Ada.Calendar.Time;
       Time     : Duration;
       Times    : constant := 10000;
    begin
       start := Ada.Calendar.Clock;
       for I in 1 .. Times loop
-         Dummy := ADS1263.GetChannalValue (0);
+         Dummy := ADS1263.Get_ADC1 (0);
       end loop;
 
       Time := Ada.Calendar.Clock - Start;
@@ -70,9 +64,9 @@ package body example is
    end;
 
    procedure TEST_RTD is
-      Data    : Interfaces.C.Unsigned_Long;
+      Dummy_Data    : Interfaces.C.Unsigned_Long;
    begin
-      Data := ADS1263.RTD (ADS1263.DELAY_8d8ms, ADS1263.GAIN_1, ADS1263.DRATE_20SPS);
+      Dummy_Data := ADS1263.RTD (ADS1263.DELAY_8d8ms, ADS1263.GAIN_1, ADS1263.DRATE_20SPS);
 
    end;
 end example;

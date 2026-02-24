@@ -2,7 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.Source_Info;
 with Waveshare.Config;
 package body Waveshare.ADS1263 is
-   ScanMode    : aliased unsigned_char;
+   ScanMode    : aliased unsigned_char := 0;
    use Waveshare.Config;
 
    -----------
@@ -121,11 +121,10 @@ package body Waveshare.ADS1263 is
    -- SetMode --
    -------------
 
-   procedure SetMode (Mode : unsigned_char) is
+   procedure Set_Mode (Differential : Boolean := False) is
    begin
-      pragma Debug (Put_Line (GNAT.Source_Info.Enclosing_Entity));
-      ScanMode := (if Mode = 0 then 0 else 1);
-   end SetMode;
+      ScanMode := (if Differential then 1 else 0);
+   end Set_Mode;
 
    ----------------
    -- ConfigADC1 --
@@ -201,10 +200,10 @@ package body Waveshare.ADS1263 is
    -- SetChannal --
    ----------------
 
-   procedure SetChannal (Channal : Channel_Number) is
+   procedure SetChannal_ADC1 (Channal : Channel_Number) is
    begin
       Set (REG_INPMUX, Channal * 2 ** 4 or 14#0A#);
-   end SetChannal;
+   end SetChannal_ADC1;
 
    ---------------------
    -- SetChannal_ADC2 --
@@ -219,7 +218,7 @@ package body Waveshare.ADS1263 is
    -- SetDiffChannal --
    --------------------
 
-   procedure SetDiffChannal (Channal : Diff_Channel_Number) is
+   procedure SetDiffChannal_ADC1 (Channal : Diff_Channel_Number) is
    begin
       Set (REG_INPMUX, (case Channal is
               when 0      => 2#0000_0001#,
@@ -227,7 +226,7 @@ package body Waveshare.ADS1263 is
               when 2      => 2#0100_0101#,
               when 3      => 2#0110_0111#,
               when 4      => 2#1000_1001#));
-   end SetDiffChannal;
+   end SetDiffChannal_ADC1;
 
    -------------------------
    -- SetDiffChannal_ADC2 --
@@ -308,9 +307,9 @@ package body Waveshare.ADS1263 is
 
    begin
       if ScanMode = 0 then -- 0  Single-ended input  10 channel1 Differential input  5 channel
-         SetChannal (Channel);
+         SetChannal_ADC1 (Channel);
       else
-         SetDiffChannal (Channel);
+         SetDiffChannal_ADC1 (Channel);
       end if;
       WaitDRDY;
       return Read_ADC1_Data;
@@ -342,8 +341,32 @@ package body Waveshare.ADS1263 is
       return Scale (Get_ADC2 (Channel), Ref_Voltage);
    end Get_ADC2;
 
+   function Get_ADC2
+     (List        : Channel_List;
+      Ref_Voltage : Float := 5.08)
+      return Ada.Numerics.Real_Arrays.Real_Vector is
+   begin
+      return Ret : Ada.Numerics.Real_Arrays.Real_Vector (List'Range) do
+         for I in List'Range loop
+            Ret (I) := Scale (Get_ADC2 (List (I)), Ref_Voltage);
+         end loop;
+      end return;
+   end;
+
+   function Get_ADC2
+     (List        : Channel_List;
+      Ref_Voltage : Long_Float := 5.08)
+      return Ada.Numerics.Long_Real_Arrays.Real_Vector is
+   begin
+      return Ret : Ada.Numerics.Long_Real_Arrays.Real_Vector (List'Range) do
+         for I in List'Range loop
+            Ret (I) := Scale (Get_ADC2 (List (I)), Ref_Voltage);
+         end loop;
+      end return;
+   end;
+
    ------------
-   -- GetAll --
+   -- Get_ADC1 --
    ------------
 
    function Get_ADC1
@@ -367,6 +390,20 @@ package body Waveshare.ADS1263 is
       return Scale (Get_ADC1 (List), Ref_Voltage);
    end;
 
+   function Get_ADC1
+     (Channel        : Channel_Number;
+      Ref_Voltage    : Float := 5.08) return Float is
+   begin
+      return Scale (GetChannalValue (Channel), Ref_Voltage);
+   end;
+
+   function Get_ADC1
+     (Channel     : Channel_Number;
+      Ref_Voltage : Long_Float := 5.08) return Long_Float is
+   begin
+      return Scale (GetChannalValue (Channel), Ref_Voltage);
+   end;
+
    procedure Get_ADC1
      (List        : Channel_List;
       Data        : out Data_Values) is
@@ -375,18 +412,6 @@ package body Waveshare.ADS1263 is
          Data (I) := GetChannalValue (List (I));
       end loop;
    end;
-
-   -----------------
-   -- GetAll_ADC2 --
-   -----------------
-
-   procedure GetAll_ADC2 (ADC_Values : out All_Data_Values) is
-   begin
-      for I in ADC_Values'Range loop
-         ADC_Values (I) := ADS1263.Get_ADC2 (Channel_Number (I));
-         ADS1263.WriteCmd (CMD_STOP2);
-      end loop;
-   end GetAll_ADC2;
 
    ---------
    -- RTD --

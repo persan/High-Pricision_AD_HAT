@@ -1,6 +1,6 @@
 with "../waveshare.gpr";
 
-project Waveshare_Test is
+project Waveshare.Examples is
 
    for Languages use ("Ada");
    for Source_Dirs use ("src");
@@ -27,12 +27,12 @@ project Waveshare_Test is
 
    package Compiler is
       for Driver ("c") use "";
-      for Switches ("ada") use ("-gnatX", "-gnata");
+      for Switches ("ada") use ("-gnatX", "-gnatwa");
    end Compiler;
 
    package Binder is
       for Switches ("ada") use ("-E");
    end Binder;
 
-end Waveshare_Test;
+end Waveshare.Examples;
 

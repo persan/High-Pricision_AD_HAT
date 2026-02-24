@@ -78,49 +78,43 @@ package Waveshare.ADS1263 is
    DAC_VLOT_1_5       : constant := 24;
    DAC_VLOT_0_5       : constant := 25;  -- ADS1263.h:130
 
-   procedure SetMode (Mode : unsigned_char);
+   procedure Set_Mode  (Differential : Boolean := False);
 
    procedure ConfigADC1
      (The_Gain    : ADC1_GAIN;
       The_drate   : ADC1_DRATE;
       The_Delay   : DELAY_Time);
-
-   procedure ConfigADC2
-     (GAIN      : ADS1263.GAIN;
-      drate     : ADC2_DRATE;
-      The_Delay : DELAY_Time);
-
-   procedure init_ADC1 (rate : ADC1_DRATE);
-
-   procedure init_ADC2 (rate : ADC2_DRATE);
+   --  ADC config function, which can set the ADC rate, PGA gain multiple, reference voltage, etc.
+   --  The information on the register you can check in the ADS1263.
+   --  If you need to configure other registers, it is better to read and verify after each writing according to the routine manner.
+   --  In order to ensure data stability and reduce crosstalk between multiple channels and two ADCs,
+   --  the data conversion delay used by the demo is relatively large and the conversion rate is relatively slow.
+   --  But you can modify it if you need to increase the speed.
+   --  It is not recommended to turn on PGA when using single-ended measurement for ADC1. The PGA is off by default.
+   --  -------------------------------------------------------------------------
 
    subtype Channel_Number is unsigned_char range 0 .. 9;
-
-   procedure SetChannal (Channal : Channel_Number);
-
    subtype Diff_Channel_Number is Channel_Number range 0 .. 4;
-   procedure SetDiffChannal (Channal : Diff_Channel_Number);
-
-   procedure SetDiffChannal_ADC2 (Channal : Diff_Channel_Number);
-
-   function Read_ADC1_Data return unsigned_long;
-
-   procedure SetChannal_ADC2 (Channal : Channel_Number);
-   function Read_ADC2_Data return unsigned_long;
-
-   function GetChannalValue (Channel : Channel_Number) return unsigned_long with
-     Pre => Channel < 5;
-
-   function Get_ADC2 (Channel : Channel_Number) return unsigned_long;
-   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Float := 5.08) return Float;
-   function Get_ADC2 (Channel : Channel_Number; Ref_Voltage : Long_Float := 5.08) return Long_Float;
 
    type Channel_List is array (Natural range <>) of aliased Channel_Number;
    type Data_Values is array (Natural range <>) of aliased unsigned_long;
 
+   procedure init_ADC1 (rate : ADC1_DRATE);
+   --  Chip initialization functions, including resetting, verifying, and configuring the ADC device.
+   --  -------------------------------------------------------------------------
+
+   procedure SetChannal_ADC1 (Channal : Channel_Number);
+   procedure SetDiffChannal_ADC1 (Channal : Diff_Channel_Number);
+   --  Select the channel function, and call this function before switching the ADC channel.
+   --  -------------------------------------------------------------------------
+
    function Get_ADC1
-     (List   : Channel_List) return Data_Values with
-     Post => List'Length = Get_ADC1'Result'Length;
+     (Channel        : Channel_Number;
+      Ref_Voltage    : Float := 5.08) return Float;
+
+   function Get_ADC1
+     (Channel        : Channel_Number;
+      Ref_Voltage    : Long_Float := 5.08) return Long_Float;
 
    function Get_ADC1
      (List        : Channel_List;
@@ -129,16 +123,51 @@ package Waveshare.ADS1263 is
      Post => List'Length = Get_ADC1'Result'Length;
 
    function Get_ADC1
-     (List   : Channel_List; Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector with
+     (List        : Channel_List;
+      Ref_Voltage : Long_Float := 5.08)
+      return Ada.Numerics.Long_Real_Arrays.Real_Vector with
      Post => List'Length = Get_ADC1'Result'Length;
 
-   procedure Get_ADC1
-     (List        : Channel_List;
-      Data        : out Data_Values) with
-     pre => List'Length = Data'Length;
+   procedure init_ADC2 (rate : ADC2_DRATE);
+   --  Chip initialization functions, including resetting, verifying, and configuring the ADC device.
+   --  -------------------------------------------------------------------------
 
-   subtype All_Data_Values is Data_Values (1 .. 10);
-   procedure GetAll_ADC2 (ADC_Values : out All_Data_Values);
+   procedure ConfigADC2
+     (GAIN      : ADS1263.GAIN;
+      drate     : ADC2_DRATE;
+      The_Delay : DELAY_Time);
+   --  ADC config function, which can set the ADC rate, PGA gain multiple, reference voltage, etc.
+   --  The information on the register you can check in the ADS1263.
+   --  If you need to configure other registers, it is better to read and verify after each writing according to the routine manner.
+   --  In order to ensure data stability and reduce crosstalk between multiple channels and two ADCs,
+   --  the data conversion delay used by the demo is relatively large and the conversion rate is relatively slow.
+   --  But you can modify it if you need to increase the speed.
+   --  It is not recommended to turn on PGA when using single-ended measurement for ADC1. The PGA is off by default.
+   --  -------------------------------------------------------------------------
+
+   procedure SetChannal_ADC2 (Channal : Channel_Number);
+   procedure SetDiffChannal_ADC2 (Channal : Diff_Channel_Number);
+   --  Select the channel function, and call this function before switching the ADC channel.
+
+   function Get_ADC2 (Channel     : Channel_Number;
+                      Ref_Voltage : Float := 5.08) return Float;
+
+   function Get_ADC2 (Channel     : Channel_Number;
+                      Ref_Voltage : Long_Float := 5.08) return Long_Float;
+
+   function Get_ADC2
+     (List        : Channel_List;
+      Ref_Voltage : Float := 5.08)
+      return Ada.Numerics.Real_Arrays.Real_Vector with
+     Post => List'Length = Get_ADC2'Result'Length;
+
+   function Get_ADC2
+     (List        : Channel_List;
+      Ref_Voltage : Long_Float := 5.08)
+      return Ada.Numerics.Long_Real_Arrays.Real_Vector with
+     Post => List'Length = Get_ADC2'Result'Length;
+
+   -----------------------------------------------------------------------------
 
    function RTD
      (c_delay     : DELAY_Time;
@@ -149,18 +178,6 @@ package Waveshare.ADS1263 is
      (volt       : DAC_VOLT;
       isPositive : Boolean;
       isOpen     : Boolean);
-
-   function Scale (Items       : Data_Values;
-                   Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector;
-
-   function Scale (Items       : Data_Values;
-                   Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector;
-
-   function Scale (Item        : unsigned_long;
-                   Ref_Voltage : Long_Float := 5.08) return Long_Float;
-
-   function Scale (Item        : unsigned_long;
-                   Ref_Voltage : Float := 5.08) return Float;
 
 private
    type REG is
@@ -221,7 +238,42 @@ private
    procedure Reset;
 
    procedure WaitDRDY;
+   --  Data waiting function, DEV_DRDY_PIN is the DRDY pin,
+   --  which is valid when ADC1 performs data conversion and sends a low level after the data is ready.
+   --  Note ADC2 is not applicable to this function.
 
    function ReadChipID return unsigned_char;
+   --  Chip Read function, if the return value is 1, which means the IC is ADS1263, and return 0 for ADS1262.
+
+   function GetChannalValue (Channel : Channel_Number) return unsigned_long with
+     Pre => Channel < 5;
+
+   function Get_ADC2 (Channel : Channel_Number) return unsigned_long;
+
+   function Read_ADC1_Data return unsigned_long;
+   function Read_ADC2_Data return unsigned_long;
+   --  Read ADC data function,
+   --  the return value of ADC1 is 32-bit data, and for ADC2 is 24-bit data.
+   --  -------------------------------------------------------------------------
+   function Get_ADC1
+     (List   : Channel_List) return Data_Values with
+     Post => List'Length = Get_ADC1'Result'Length;
+
+   procedure Get_ADC1
+     (List        : Channel_List;
+      Data        : out Data_Values) with
+     pre => List'Length = Data'Length;
+
+   function Scale (Items       : Data_Values;
+                   Ref_Voltage : Long_Float := 5.08) return Ada.Numerics.Long_Real_Arrays.Real_Vector;
+
+   function Scale (Items       : Data_Values;
+                   Ref_Voltage : Float := 5.08) return Ada.Numerics.Real_Arrays.Real_Vector;
+
+   function Scale (Item        : unsigned_long;
+                   Ref_Voltage : Long_Float := 5.08) return Long_Float;
+
+   function Scale (Item        : unsigned_long;
+                   Ref_Voltage : Float := 5.08) return Float;
 
 end Waveshare.ADS1263;
