@@ -4,6 +4,10 @@ with GNAT.Time_Stamp;
 package body bcm2835_h_Impl is
    use Interfaces.C.Strings;
    pragma Warnings (Off);
+
+   Buffer    : array (1 .. 16) of Unsigned_Char := (others => 255);
+   Cursor    : Natural := Buffer'First;
+
    ------------------
    -- bcm2835_init --
    ------------------
@@ -16,8 +20,9 @@ package body bcm2835_h_Impl is
 
    function bcm2835_init return int is
    begin
+      Cursor := Buffer'First;
       Log;
-      return 0;
+      return 1;
    end bcm2835_init;
 
    -------------------
@@ -398,6 +403,9 @@ package body bcm2835_h_Impl is
      (pin : unsigned_Char; on : unsigned_Char)
    is
    begin
+      if Pin = 22 and then On = 0 then
+         Cursor := Buffer'First;
+      end if;
       Log ("pin => " & Pin'Image & ", on => " & On'Image);
    end bcm2835_gpio_write;
 
@@ -531,8 +539,6 @@ package body bcm2835_h_Impl is
    --------------------------
    -- bcm2835_spi_transfer --
    --------------------------
-   Buffer    : array (1 .. 16) of Unsigned_Char := (others => 255);
-   Cursor    : Natural := Buffer'First;
    function bcm2835_spi_transfer
      (value : unsigned_Char) return unsigned_Char
    is

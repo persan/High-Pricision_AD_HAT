@@ -6,6 +6,9 @@ with Interfaces.C.Strings;
 
 package bcm2835_h_Impl is
 
+   --  The intent of this packe is to enable a mockup for the
+   --  bcm2835 chip on the rasperry-pi.
+
    BCM2835_VERSION : constant := 10077;  --  bcm2835.h:679
 
    HIGH            : constant := 16#1#;  --  bcm2835.h:701

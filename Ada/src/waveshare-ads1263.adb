@@ -295,6 +295,7 @@ package body Waveshare.ADS1263 is
       Ret.Buf (1) := DEV_SPI_ReadByte;
       CRC := DEV_SPI_ReadByte;
       DEV_Digital_Write (DEV_CS_PIN, 1);
+
       ADS1263.Checksum (Ret.Buf, CRC);
       return Ret.Read;
    end Read_ADC2_Data;
